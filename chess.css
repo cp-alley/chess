@@ -70,3 +70,23 @@ textarea:not([rows]) {
 :target {
   scroll-margin-block: 5ex;
 }
+
+#chessboard {
+  display: flex;
+  flex-wrap: wrap;
+  width: 40rem;
+  margin: 2rem auto;
+}
+
+.square {
+  height: 5rem;
+  width: 5rem;
+}
+
+.light {
+  background: #eaddd7;
+}
+
+.dark {
+  background: #846358;
+}
