@@ -74,13 +74,13 @@ textarea:not([rows]) {
 #chessboard {
   display: flex;
   flex-wrap: wrap;
-  width: 40rem;
+  width: 32rem;
   margin: 2rem auto;
 }
 
 .square {
-  height: 5rem;
-  width: 5rem;
+  height: 4rem;
+  width: 4rem;
 }
 
 .light {
@@ -89,4 +89,9 @@ textarea:not([rows]) {
 
 .dark {
   background: #846358;
+}
+
+.piece {
+  height: 4rem;
+  width: 4rem;
 }

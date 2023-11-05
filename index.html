@@ -7,7 +7,10 @@
   <title>Chess</title>
 </head>
 <body>
-  <button id="start-button">Start</button>
+  <form id="start-position">
+    <input id="fen-string" type="text" value="RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr">
+    <button type="submit">Start</button>
+  </form>
   <div id="chessboard"></div>
 
   <script src="./build/board.js"></script>
