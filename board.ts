@@ -1,6 +1,7 @@
 const FILES = "abcdefgh";
 const PIECE_SYMBOLS = "KQRBNPkqrbnp";
 const DEFAULT_POSITION = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr";
+const SQUARE_SIZE = 80;
 
 const $board = $("#chessboard") as JQuery<HTMLDivElement>;
 const positionForm = document.getElementById("start-position") as HTMLFormElement;
@@ -11,7 +12,7 @@ class Board {
   beingDragged: HTMLImageElement | null = null;
 
   drawPieces = (fen: string) => {
-    console.log("drawBoard");
+    console.debug("drawPieces");
     let rank = 8;
     let file = 0;
     for (const char of fen) {
@@ -37,17 +38,15 @@ class Board {
   };
 
   drawBoard = () => {
+    console.debug("drawBoard")
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {
         const isLightSquare = (rank + file) % 2 === 0;
-        // const square = `<div
-        //   id=${FILES[file] + (8 - rank)}
-        //   class="square ${isLightSquare ? "light" : "dark"}"></div>`;
         const $square = $(`
-      <div
-      id=${FILES[file] + (8 - rank)}
-      class="square ${isLightSquare ? "light" : "dark"}">
-      </div>`);
+          <div
+          id=${FILES[file] + (8 - rank)}
+          class="square ${isLightSquare ? "light" : "dark"}">
+          </div>`);
         $board.append($square);
       }
     }
@@ -62,13 +61,22 @@ class Board {
 
 
   selectPiece = (e: JQuery.MouseDownEvent) => {
-    const square = $(e.currentTarget).attr("id")!;
-    if (!this.currentPosition.hasOwnProperty(square)) return;
-    this.dragPiece(square, this.currentPosition[square], e.pageX, e.pageY);
+    const squareId = $(e.currentTarget).attr("id")!;
+    if (!(squareId in this.currentPosition)) return;
+
+
+    const $square = $(`#${squareId}`)
+    const $piece = $square.children().first()
+    this.dragPiece($square, $piece, e.pageX, e.pageY);
   };
 
-  dragPiece = (square:string, piece:string, x:number, y:number) => {
-
+  dragPiece = (square:JQuery<HTMLElement>, piece:JQuery<HTMLElement>, x:number, y:number) => {
+    console.debug("dragging", square, piece, x, y)
+    $(square).empty()
+    $(piece).css({
+      top: y - SQUARE_SIZE / 2,
+      left: x - SQUARE_SIZE / 2
+    })
   };
   // const dragOver = (e: DragEvent) => {
   //   e.preventDefault();
