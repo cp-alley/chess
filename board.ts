@@ -4,12 +4,12 @@ const DEFAULT_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 const SQUARE_SIZE = 80;
 
 const $board = $("#chessboard") as JQuery<HTMLDivElement>;
-const positionForm = document.getElementById("start-position") as HTMLFormElement;
-const positionInput = document.getElementById("fen-string") as HTMLInputElement;
+const $positionForm = $("#start-position") as JQuery<HTMLFormElement>;
+const $positionInput = $("#fen-string") as JQuery<HTMLInputElement>;
 
 interface OffsetInterface {
   top: number,
-  left: number
+  left: number;
 }
 
 class Board {
@@ -30,14 +30,17 @@ class Board {
       } else if ("12345678".includes(char)) {
         file += Number(char);
       } else if (PIECE_SYMBOLS.includes(char)) {
-        const square = document.getElementById(`${FILES[file] + rank}`) as HTMLDivElement;
+        const $square = $(`#${FILES[file] + rank}`) as JQuery<HTMLDivElement>;
         const isWhitePiece = char === char.toUpperCase();
-        const piece = `<img
-        class="piece"
-        src="./assets/pieces/${(isWhitePiece ? "w" : "b") + char.toUpperCase()}.svg"
-        alt="${char}">`;
-        square.innerHTML += piece;
-        this.currentPosition[FILES[file] + rank] = char;
+        const pieceId = (isWhitePiece ? "w" : "b") + char.toUpperCase();
+        const $piece = $(`
+        <img
+          id=${pieceId}
+          class="piece"
+          src="./assets/pieces/${pieceId}.svg"
+          alt="${pieceId}">`);
+        $piece.appendTo($square)
+        this.currentPosition[FILES[file] + rank] = pieceId;
         file++;
       } else {
         return;
@@ -61,28 +64,30 @@ class Board {
   };
 
   getSquareOffsets = () => {
-    this.squareOffsets = {}
-    const $squares = $(".square")
+    this.squareOffsets = {};
+    const $squares = $(".square");
     for (const square of $squares) {
-      const id = $(square).attr("id") as string
-      this.squareOffsets[id] = $(square).offset() as OffsetInterface
+      const id = $(square).attr("id") as string;
+      this.squareOffsets[id] = $(square).offset() as OffsetInterface;
     }
-  }
+  };
 
   getSquareByLocation = (x: number, y: number) => {
     for (const square in this.squareOffsets) {
-      const sq = this.squareOffsets[square]
+      const sq = this.squareOffsets[square];
       if (
         x >= sq.left &&
         x < sq.left + SQUARE_SIZE &&
         y >= sq.top &&
-        y < sq.top + SQUARE_SIZE) return square
+        y < sq.top + SQUARE_SIZE) return square;
     }
 
-    return "offboard"
-  }
+    return "offboard";
+  };
 
   selectPiece = (e: JQuery.MouseDownEvent) => {
+    e.preventDefault();
+
     const squareId = $(e.currentTarget).attr("id")!;
     if (!(squareId in this.currentPosition)) return;
 
@@ -90,6 +95,7 @@ class Board {
     const $piece = $square.children().first();
     this.beingDragged = $piece;
     this.isDragging = true;
+
     $(this.beingDragged).css({
       display: "",
       position: "absolute",
@@ -110,8 +116,8 @@ class Board {
   dropPiece = (x: number, y: number) => {
     this.isDragging = false;
 
-    this.getSquareOffsets()
-    const squareId = this.getSquareByLocation(x,y)
+    this.getSquareOffsets();
+    const squareId = this.getSquareByLocation(x, y);
 
     if (this.beingDragged) {
       $(this.beingDragged).css({
@@ -123,12 +129,13 @@ class Board {
         const $square = $(`#${squareId}`);
         $square.empty();
         $square.append(this.beingDragged);
-        this.currentPosition[squareId] = $(this.beingDragged).attr("alt") as string
+        this.currentPosition[squareId] = $(this.beingDragged).attr("id") as string;
       }
     }
   };
 
   handleDrag = (e: JQuery.MouseMoveEvent) => {
+    e.preventDefault();
     if (this.isDragging) {
       this.dragPiece(e.pageX, e.pageY);
     }
@@ -139,34 +146,22 @@ class Board {
     this.dropPiece(e.pageX, e.pageY);
   };
 
-  dragOver = (e: JQuery.MouseDownEvent) => {
+  handleSubmit = (e: JQuery.SubmitEvent) => {
     e.preventDefault();
-  };
-
-  // const dropPiece = (e: DragEvent) => {
-  //   console.log("drop target=", e.target)
-  //   const square = e.target as HTMLDivElement
-  //   square.append(beingDragged)
-  // };
-
-  handleSubmit = (e: SubmitEvent) => {
-    e.preventDefault();
-    const fen = positionInput.value;
+    const fen = $positionInput.val() || DEFAULT_POSITION;
     this.drawPieces(fen);
   };
 }
 
 const init = () => {
+  console.debug("Board init")
   const newBoard = new Board;
   newBoard.drawBoard();
-  positionForm.addEventListener("submit", newBoard.handleSubmit);
+  $positionForm.on("submit", newBoard.handleSubmit);
   $board
     .on("mousedown", ".square", newBoard.selectPiece)
     .on("mousemove", newBoard.handleDrag)
-    .on("mouseup", newBoard.stopDrag)
-    .on("mousedown mousemove", newBoard.dragOver);
-  // $board.addEventListener("dragover", dragOver);
-  // $board.addEventListener("drop", dropPiece)
+    .on("mouseup", newBoard.stopDrag);
 };
 
 $(init);
