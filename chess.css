@@ -71,11 +71,43 @@ textarea:not([rows]) {
   scroll-margin-block: 5ex;
 }
 
+body {
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#fen-string {
+  width: 32rem;
+  padding: 0 0.25rem;
+}
+
+button:hover {
+  background-color: #60a5fa;
+}
+
+button:active {
+  background-color: #2563eb;
+}
+
+button {
+  padding: 0.25rem 0.75rem;
+  background-color: #3b82f6;
+  outline: none;
+  border: none;
+  border-radius: .25rem;
+  color: white;
+  margin-left: .5rem;
+}
+
 #chessboard {
   display: flex;
   flex-wrap: wrap;
   width: 32rem;
   margin: 2rem auto;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 .square {
