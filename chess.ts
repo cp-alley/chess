@@ -23,15 +23,23 @@
  * Print FEN of position
 */
 
-const PIECES = ["EMPTY", "PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"];
-const COLORS = ["EMPTY", "WHITE", "BLACK"];
+const PIECES = {
+  "EMPTY": 0,
+  "PAWN": 1,
+  "KNIGHT": 2,
+  "BISHOP": 3,
+  "ROOK": 4,
+  "QUEEN": 5,
+  "KING": 6
+};
+const COLORS = { "EMPTY": 0, "WHITE": 1, "BLACK": 2 };
 
 // 8x8 chessboard surrounded by sentinel values for offboard checks
 const mailbox = [
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
-  -1,  8,  9, 10, 11, 12, 13, 14, 15, -1,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, -1,
+  -1, 8, 9, 10, 11, 12, 13, 14, 15, -1,
   -1, 16, 17, 18, 19, 20, 21, 22, 23, -1,
   -1, 24, 25, 26, 27, 28, 29, 30, 31, -1,
   -1, 32, 33, 34, 35, 36, 37, 38, 39, -1,
@@ -57,5 +65,29 @@ const mailbox64 = [
 /** Chess class to make moves, validate moves, check for end of game */
 class Chess {
   board = Array(64);
+  turn = "w";
+
+  constructor() {
+
+  }
+
+  parseFen = (fen: string) => {
+    let rank = 7;
+    let file = 0;
+    let sq = 0;
+    for (const char of fen) {
+      if (char === "/") {
+        rank--;
+        file = 0;
+      } else if ("12345678".includes(char)) {
+        for (let i=0; i < +char; i++) {
+          this.board[sq] = {piece: PIECES.EMPTY, color: COLORS.EMPTY}
+        }
+      } else if (PIECE_SYMBOLS.includes(char)) {
+
+      }
+    }
+  };
+
 
 }
