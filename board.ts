@@ -8,7 +8,7 @@ const $positionForm = $("#start-position") as JQuery<HTMLFormElement>;
 const $positionInput = $("#fen-string") as JQuery<HTMLInputElement>;
 
 interface OffsetInterface {
-  top: number,
+  top: number;
   left: number;
 }
 
@@ -38,8 +38,9 @@ class Board {
           id=${pieceId}
           class="piece"
           src="./assets/pieces/${pieceId}.svg"
-          alt="${pieceId}">`);
-        $piece.appendTo($square)
+          alt="${pieceId}"
+          draggable="true">`);
+        $piece.appendTo($square);
         this.currentPosition[FILES[file] + rank] = pieceId;
         file++;
       } else {
@@ -79,72 +80,112 @@ class Board {
         x >= sq.left &&
         x < sq.left + SQUARE_SIZE &&
         y >= sq.top &&
-        y < sq.top + SQUARE_SIZE) return square;
+        y < sq.top + SQUARE_SIZE
+      )
+        return square;
     }
 
     return "offboard";
   };
 
-  selectPiece = (e: JQuery.MouseDownEvent) => {
-    e.preventDefault();
+  // selectPiece = (e: JQuery.DragStartEvent) => {
+  //   e.preventDefault();
+  //   console.log(e)
 
-    const squareId = $(e.currentTarget).attr("id")!;
-    if (!(squareId in this.currentPosition)) return;
+  //   const squareId = $(e.currentTarget).attr("id")!;
+  //   if (!(squareId in this.currentPosition)) return;
 
-    const $square = $(`#${squareId}`);
-    const $piece = $square.children().first();
-    this.beingDragged = $piece;
-    this.isDragging = true;
+  //   const $square = $(`#${squareId}`);
+  //   const $piece = $square.children().first();
+  //   this.beingDragged = $piece;
+  //   this.isDragging = true;
 
-    $(this.beingDragged).css({
-      display: "",
-      position: "absolute",
-      top: e.pageY - SQUARE_SIZE / 2,
-      left: e.pageX - SQUARE_SIZE / 2
-    });
-  };
+  //   // $(this.beingDragged).css({
+  //   //   display: "",
+  //   //   position: "absolute",
+  //   //   top: e.pageY - SQUARE_SIZE / 2,
+  //   //   left: e.pageX - SQUARE_SIZE / 2,
+  //   // });
+  // };
 
-  dragPiece = (x: number, y: number) => {
-    if (this.beingDragged) {
-      $(this.beingDragged).css({
-        top: y - SQUARE_SIZE / 2,
-        left: x - SQUARE_SIZE / 2
-      });
-    }
-  };
+  // dragPiece = (x: number, y: number) => {
+  //   if (this.beingDragged) {
+  //     $(this.beingDragged).css({
+  //       top: y - SQUARE_SIZE / 2,
+  //       left: x - SQUARE_SIZE / 2,
+  //     });
+  //   }
+  // };
 
-  dropPiece = (x: number, y: number) => {
-    this.isDragging = false;
+  // dropPiece = (x: number, y: number) => {
+  //   this.isDragging = false;
 
-    this.getSquareOffsets();
-    const squareId = this.getSquareByLocation(x, y);
+  //   this.getSquareOffsets();
+  //   const squareId = this.getSquareByLocation(x, y);
 
-    if (this.beingDragged) {
-      $(this.beingDragged).css({
-        display: "block",
-        position: "",
-      });
+  //   if (this.beingDragged) {
+  //     $(this.beingDragged).css({
+  //       display: "block",
+  //       position: "",
+  //     });
 
-      if (squareId !== "offboard") {
-        const $square = $(`#${squareId}`);
-        $square.empty();
-        $square.append(this.beingDragged);
-        this.currentPosition[squareId] = $(this.beingDragged).attr("id") as string;
-      }
-    }
-  };
+  //     if (squareId !== "offboard") {
+  //       const $square = $(`#${squareId}`);
+  //       $square.empty();
+  //       $square.append(this.beingDragged);
+  //       this.currentPosition[squareId] = $(this.beingDragged).attr(
+  //         "id"
+  //       ) as string;
+  //     }
+  //   }
+  // };
 
-  handleDrag = (e: JQuery.MouseMoveEvent) => {
-    e.preventDefault();
-    if (this.isDragging) {
-      this.dragPiece(e.pageX, e.pageY);
-    }
-  };
+  // dropPiece = ($square: JQuery<HTMLElement>) => {
+  //   this.isDragging = false;
 
-  stopDrag = (e: JQuery.MouseUpEvent) => {
-    if (!this.isDragging) return;
-    this.dropPiece(e.pageX, e.pageY);
-  };
+  //   if (this.beingDragged) {
+  //     $(this.beingDragged).css({
+  //       display: "block",
+  //       position: "",
+  //     });
+
+  //     $square.empty();
+  //     console.log("$square=", $square);
+  //     $square.append(this.beingDragged);
+  //     const squareId = $square.attr("id") as string;
+  //     this.currentPosition[squareId] = $(this.beingDragged).attr(
+  //       "id"
+  //     ) as string;
+  //   }
+  // };
+
+  // handleDrag = (e: JQuery.MouseMoveEvent) => {
+  //   e.preventDefault();
+  //   if (this.isDragging) {
+  //     this.dragPiece(e.pageX, e.pageY);
+  //   }
+  // };
+
+  // stopDrag = (e: JQuery.MouseUpEvent) => {
+  //   e.preventDefault();
+  //   if (!this.isDragging) return;
+  //   // console.log(e);
+  //   const $targetSquare = $(e.currentTarget);
+  //   this.dropPiece(e.pageX, e.pageY);
+  //   // this.dropPiece($targetSquare);
+  // };
+  dragPiece = (e: JQuery.DragStartEvent) => {
+    this.beingDragged = $(e.target) as JQuery<HTMLImageElement>
+  }
+
+  dragOver = (e: JQuery.DragOverEvent) => {
+    e.preventDefault()
+  }
+
+  dropPiece = (e: JQuery.DropEvent) => {
+    const square = $(e.target)
+    square.append(this.beingDragged as JQuery<HTMLImageElement>)
+  }
 
   handleSubmit = (e: JQuery.SubmitEvent) => {
     e.preventDefault();
@@ -154,14 +195,14 @@ class Board {
 }
 
 const init = () => {
-  console.debug("Board init")
-  const newBoard = new Board;
+  console.debug("Board init");
+  const newBoard = new Board();
   newBoard.drawBoard();
   $positionForm.on("submit", newBoard.handleSubmit);
   $board
-    .on("mousedown", ".square", newBoard.selectPiece)
-    .on("mousemove", newBoard.handleDrag)
-    .on("mouseup", newBoard.stopDrag);
+    .on("dragstart", ".square", newBoard.dragPiece)
+    .on("dragover", newBoard.dragOver)
+    .on("drop", ".square", newBoard.dropPiece);
 };
 
 $(init);
