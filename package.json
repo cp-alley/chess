@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "tsc --outDir build board.ts",
-    "dev": "tsc --outDir build board.ts --watch"
+    "dev": "tsc --outDir build board.ts chess.ts --watch"
   },
   "dependencies": {
     "typescript": "^5.2.2"
