@@ -1,6 +1,7 @@
 const FILES = "abcdefgh";
 const PIECE_SYMBOLS = "KQRBNPkqrbnp";
-const DEFAULT_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+const DEFAULT_POSITION =
+  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const SQUARE_SIZE = 80;
 
 const $board = $("#chessboard") as JQuery<HTMLDivElement>;
@@ -175,17 +176,17 @@ class Board {
   //   // this.dropPiece($targetSquare);
   // };
   dragPiece = (e: JQuery.DragStartEvent) => {
-    this.beingDragged = $(e.target) as JQuery<HTMLImageElement>
-  }
+    this.beingDragged = $(e.target) as JQuery<HTMLImageElement>;
+  };
 
   dragOver = (e: JQuery.DragOverEvent) => {
-    e.preventDefault()
-  }
+    e.preventDefault();
+  };
 
   dropPiece = (e: JQuery.DropEvent) => {
-    const square = $(e.target)
-    square.append(this.beingDragged as JQuery<HTMLImageElement>)
-  }
+    const square = $(e.target);
+    square.append(this.beingDragged as JQuery<HTMLImageElement>);
+  };
 
   handleSubmit = (e: JQuery.SubmitEvent) => {
     e.preventDefault();
@@ -199,6 +200,7 @@ const init = () => {
   const newBoard = new Board();
   newBoard.drawBoard();
   $positionForm.on("submit", newBoard.handleSubmit);
+  $positionInput.val(DEFAULT_POSITION);
   $board
     .on("dragstart", ".square", newBoard.dragPiece)
     .on("dragover", newBoard.dragOver)
