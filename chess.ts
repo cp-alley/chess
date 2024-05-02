@@ -28,7 +28,7 @@ interface Piece {
   color: number;
 }
 
-type Position = (Piece | null)[]
+type Position = (Piece | null)[];
 
 interface Move {
   from: number;
@@ -65,8 +65,8 @@ const PIECE_CODES: Record<string, number> = {
 const mailbox = [
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
-  -1,  8,  9, 10, 11, 12, 13, 14, 15, -1,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, -1,
+  -1, 8, 9, 10, 11, 12, 13, 14, 15, -1,
   -1, 16, 17, 18, 19, 20, 21, 22, 23, -1,
   -1, 24, 25, 26, 27, 28, 29, 30, 31, -1,
   -1, 32, 33, 34, 35, 36, 37, 38, 39, -1,
@@ -91,10 +91,10 @@ const mailbox64 = [
 ];
 
 /** Maps piece to boolean value if it is a sliding piece */
-const slidingPieces = [false, false, true, true, true, false]
+const slidingPieces = [false, false, true, true, true, false];
 
 /** Maps piece to number of available directions to move */
-const pieceDirections = [0, 8, 4, 4, 8, 8]
+const pieceDirections = [0, 8, 4, 4, 8, 8];
 
 /** Maps piece to offsets for a move */
 const pieceOffsets = [
@@ -104,7 +104,7 @@ const pieceOffsets = [
   [-10, -1, 1, 10],
   [-11, -10, -9, -1, 1, 9, 10, 11],
   [-11, -10, -9, -1, 1, 9, 10, 11]
-]
+];
 
 /** Chess class to make moves, validate moves, check for end of game */
 class Chess {
@@ -153,20 +153,29 @@ class Chess {
       const piece = this.getPieceAt(square);
 
       if (piece && piece.color === this.turn) {
-        if (piece.type === PieceType.Pawn) {
-
-        }
-
-        else if (!slidingPieces[piece.type]) {
-
-        }
-
-        else if (slidingPieces[piece.type]) {
-
+        if (piece.type !== PieceType.Pawn) {
+          for (let i = 0; i < pieceDirections[piece.type]; i++) { // For all directions
+            for (let j = square; ;) {
+              j = mailbox[mailbox64[j] + pieceOffsets[piece.type][i]]; // Next square along ray
+              if (j === -1) break; // off-board
+              const targetPiece = this.getPieceAt(j);
+              if (targetPiece) {
+                if (targetPiece.color !== PieceType.Empty) {
+                  if (targetPiece.color !== this.turn) {
+                    legalMoves.push({ from: square, to: j, flag: "capture" });
+                  }
+                  break;
+                }
+              }
+              legalMoves.push({ from: square, to: j, flag: "normal" });
+              if (!slidingPieces[piece.type]) break;
+            }
+          }
+        } else {
+          // pawn moves
         }
       }
     }
-
     return legalMoves;
   }
 
