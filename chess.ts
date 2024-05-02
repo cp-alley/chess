@@ -23,6 +23,28 @@
  * Print FEN of position
  */
 
+interface Piece {
+  type: number;
+  color: number;
+}
+
+interface Position {
+  [square: number]: Piece | null;
+}
+
+interface Move {
+  from: number;
+  to: number;
+}
+
+interface GameOptions {
+  turn: 'w' | 'b';
+  castling: string;
+  epSquare: string | 0;
+  halfMove: number;
+  move: number;
+}
+
 const PIECES = {
   EMPTY: 0,
   PAWN: 1,
@@ -32,7 +54,9 @@ const PIECES = {
   QUEEN: 5,
   KING: 6,
 };
+
 const COLORS = { EMPTY: 0, WHITE: 1, BLACK: 2 };
+
 const PIECE_CODES: Record<string, number> = {
   p: PIECES.PAWN,
   n: PIECES.KNIGHT,
@@ -74,7 +98,7 @@ const mailbox64 = [
 
 /** Chess class to make moves, validate moves, check for end of game */
 class Chess {
-  board = Array(64);
+  board: Position = Array(64);
   turn = "w";
   castling = "KQkq";
   epSquare: string | 0 = 0;
@@ -85,8 +109,51 @@ class Chess {
     this.parseFen(fen);
   }
 
-  /** Generate game position from a valid FEN string */
-  parseFen = (fen: string) => {
+  /** Convert mailbox index to mailbox64 index */
+  private mailboxToMailbox64(mailboxIndex: number): number {
+
+  }
+
+  /** Convert mailbox64 index to mailbox index */
+  private mailbox64toMailbox(mailbox64Index: number): number {
+
+  }
+
+  /** Get the piece at a given square */
+  private getPieceAt(square: number): Piece | null {
+
+  }
+
+  /** Set the piece at a given square */
+  private setPieceAt(square: number, piece: Piece | null) {
+
+  }
+
+  /** Generate all legal moves for the current position */
+  private generateLegalMoves(): Move[] {
+
+  }
+
+  /** Check if a move is legal */
+  private isLegalMove(move: Move): boolean {
+
+  }
+
+  /** Check if target square is attacked by a piece of opposing color */
+  private isAttacked(square: number, color: number): boolean {
+
+  }
+
+  makeMove(move: Move): boolean {
+
+  }
+
+  undoMove(): void {
+
+  }
+
+  /** Parse FEN components and update game state */
+  private parseFen(fen: string): void {
     const [position, turn, castling, epSq, halfMoves, moveNumber] =
       fen.split(" ");
     let rank = 7;
@@ -100,15 +167,15 @@ class Chess {
         file = 0;
       } else if ("12345678".includes(char)) {
         for (let i = 0; i < +char; i++) {
-          this.board[sq] = { piece: PIECES.EMPTY, color: COLORS.EMPTY };
+          this.board[sq] = { type: PIECES.EMPTY, color: COLORS.EMPTY }; //TODO: use setPieceAt
           sq++;
           file++;
         }
       } else if (PIECE_SYMBOLS.includes(char)) {
         const color = char === char.toUpperCase() ? COLORS.WHITE : COLORS.BLACK;
         const pieceCode = char.toLowerCase();
-        const piece = PIECE_CODES[pieceCode];
-        this.board[sq] = { piece, color };
+        const type = PIECE_CODES[pieceCode];
+        this.board[sq] = { type, color };
         sq++;
         file++;
       }
@@ -129,5 +196,10 @@ class Chess {
 
     // Set turn counter
     this.move = Number(moveNumber);
-  };
+  }
+
+  /** Generate FEN string representing the current position */
+  getFen(): string {
+
+  }
 }
