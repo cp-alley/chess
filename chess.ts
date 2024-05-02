@@ -28,42 +28,36 @@ interface Piece {
   color: number;
 }
 
-interface Position {
-  [square: number]: Piece | null;
-}
+type Position = (Piece | null)[]
 
 interface Move {
   from: number;
   to: number;
+  flag: "normal" | "capture" | "promotion" | "castle" | "bigPawn" | "enPassant";
 }
 
-interface GameOptions {
-  turn: 'w' | 'b';
-  castling: string;
-  epSquare: string | 0;
-  halfMove: number;
-  move: number;
+enum PieceType {
+  Pawn,
+  Knight,
+  Bishop,
+  Rook,
+  Queen,
+  King,
+  Empty
 }
 
-const PIECES = {
-  EMPTY: 0,
-  PAWN: 1,
-  KNIGHT: 2,
-  BISHOP: 3,
-  ROOK: 4,
-  QUEEN: 5,
-  KING: 6,
-};
-
-const COLORS = { EMPTY: 0, WHITE: 1, BLACK: 2 };
+enum Color {
+  White,
+  Black
+}
 
 const PIECE_CODES: Record<string, number> = {
-  p: PIECES.PAWN,
-  n: PIECES.KNIGHT,
-  b: PIECES.BISHOP,
-  r: PIECES.ROOK,
-  q: PIECES.QUEEN,
-  k: PIECES.KING,
+  p: PieceType.Pawn,
+  n: PieceType.Knight,
+  b: PieceType.Bishop,
+  r: PieceType.Rook,
+  q: PieceType.Queen,
+  k: PieceType.King,
 };
 
 // prettier-ignore
@@ -96,14 +90,30 @@ const mailbox64 = [
   91, 92, 93, 94, 95, 96, 97, 98
 ];
 
+/** Maps piece to boolean value if it is a sliding piece */
+const slidingPieces = [false, false, true, true, true, false]
+
+/** Maps piece to number of available directions to move */
+const pieceDirections = [0, 8, 4, 4, 8, 8]
+
+/** Maps piece to offsets for a move */
+const pieceOffsets = [
+  [],
+  [-21, -19, -12, -8, 8, 12, 19, 21],
+  [-11, -9, 9, 11],
+  [-10, -1, 1, 10],
+  [-11, -10, -9, -1, 1, 9, 10, 11],
+  [-11, -10, -9, -1, 1, 9, 10, 11]
+]
+
 /** Chess class to make moves, validate moves, check for end of game */
 class Chess {
   board: Position = Array(64);
-  turn = "w";
-  castling = "KQkq";
+  turn: Color.White | Color.Black = Color.White;
+  castling: string = "KQkq";
   epSquare: string | 0 = 0;
-  halfMove = 0;
-  move = 1;
+  halfMove: number = 0;
+  move: number = 1;
 
   constructor(fen: string = DEFAULT_POSITION) {
     this.parseFen(fen);
@@ -111,41 +121,67 @@ class Chess {
 
   /** Convert mailbox index to mailbox64 index */
   private mailboxToMailbox64(mailboxIndex: number): number {
-
+    return mailbox64[mailboxIndex];
   }
 
   /** Convert mailbox64 index to mailbox index */
   private mailbox64toMailbox(mailbox64Index: number): number {
-
+    return mailbox64.indexOf(mailbox64Index);
   }
 
   /** Get the piece at a given square */
   private getPieceAt(square: number): Piece | null {
-
+    return this.board[square];
   }
 
   /** Set the piece at a given square */
   private setPieceAt(square: number, piece: Piece | null) {
-
+    this.board[square] = piece;
   }
 
   /** Generate all legal moves for the current position */
   private generateLegalMoves(): Move[] {
+    // Iterate through board to find pieces of current player's color
+    // For each piece:
+    // - If pawn: Move forward 1 or 2, diagonals if occupied by opposing
+    // - If non-sliding piece: Calculate each of squares piece can move to
+    // - If sliding piece: Calculate each square in each available direction until hits piece
+    // * Special moves: big pawn move, en passant, promotion, castle
+    const legalMoves: Move[] = [];
 
+    for (let square = 0; square < 64; square++) {
+      const piece = this.getPieceAt(square);
+
+      if (piece && piece.color === this.turn) {
+        if (piece.type === PieceType.Pawn) {
+
+        }
+
+        else if (!slidingPieces[piece.type]) {
+
+        }
+
+        else if (slidingPieces[piece.type]) {
+
+        }
+      }
+    }
+
+    return legalMoves;
   }
 
   /** Check if a move is legal */
   private isLegalMove(move: Move): boolean {
-
+    return true;
   }
 
   /** Check if target square is attacked by a piece of opposing color */
   private isAttacked(square: number, color: number): boolean {
-
+    return false;
   }
 
   makeMove(move: Move): boolean {
-
+    return true;
   }
 
   undoMove(): void {
@@ -167,22 +203,24 @@ class Chess {
         file = 0;
       } else if ("12345678".includes(char)) {
         for (let i = 0; i < +char; i++) {
-          this.board[sq] = { type: PIECES.EMPTY, color: COLORS.EMPTY }; //TODO: use setPieceAt
+          // this.board[sq] = { type: PIECES.EMPTY, color: COLORS.EMPTY };
+          this.setPieceAt(sq, { type: PieceType.Empty, color: PieceType.Empty });
           sq++;
           file++;
         }
       } else if (PIECE_SYMBOLS.includes(char)) {
-        const color = char === char.toUpperCase() ? COLORS.WHITE : COLORS.BLACK;
+        const color = char === char.toUpperCase() ? Color.White : Color.Black;
         const pieceCode = char.toLowerCase();
         const type = PIECE_CODES[pieceCode];
-        this.board[sq] = { type, color };
+        // this.board[sq] = { type, color };
+        this.setPieceAt(sq, { type, color });
         sq++;
         file++;
       }
     }
 
     // Set color to go
-    this.turn = turn;
+    this.turn = turn === "w" ? Color.White : Color.Black;
 
     // Set castling rights
     this.castling = castling;
@@ -200,6 +238,6 @@ class Chess {
 
   /** Generate FEN string representing the current position */
   getFen(): string {
-
+    return "";
   }
 }
