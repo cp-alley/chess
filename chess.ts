@@ -28,12 +28,12 @@ interface Piece {
   color: number;
 }
 
-type Position = (Piece | null)[];
+type Position = Piece[];
 
 interface Move {
   from: number;
   to: number;
-  flag: "normal" | "capture" | "promotion" | "castle" | "bigPawn" | "enPassant";
+  flag: MoveFlag;
 }
 
 enum PieceType {
@@ -43,12 +43,22 @@ enum PieceType {
   Rook,
   Queen,
   King,
-  Empty
+  Empty,
 }
 
 enum Color {
   White,
-  Black
+  Black,
+}
+
+enum MoveFlag {
+  Normal,
+  Capture,
+  Promotion,
+  Castle,
+  EnPassant,
+  Pawn,
+  BigPawn,
 }
 
 const PIECE_CODES: Record<string, number> = {
@@ -65,8 +75,8 @@ const PIECE_CODES: Record<string, number> = {
 const mailbox = [
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, 0, 1, 2, 3, 4, 5, 6, 7, -1,
-  -1, 8, 9, 10, 11, 12, 13, 14, 15, -1,
+  -1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
+  -1,  8,  9, 10, 11, 12, 13, 14, 15, -1,
   -1, 16, 17, 18, 19, 20, 21, 22, 23, -1,
   -1, 24, 25, 26, 27, 28, 29, 30, 31, -1,
   -1, 32, 33, 34, 35, 36, 37, 38, 39, -1,
@@ -103,12 +113,15 @@ const pieceOffsets = [
   [-11, -9, 9, 11],
   [-10, -1, 1, 10],
   [-11, -10, -9, -1, 1, 9, 10, 11],
-  [-11, -10, -9, -1, 1, 9, 10, 11]
+  [-11, -10, -9, -1, 1, 9, 10, 11],
 ];
 
 /** Chess class to make moves, validate moves, check for end of game */
 class Chess {
-  board: Position = Array(64);
+  board: Position = Array(64).fill({
+    type: PieceType.Empty,
+    color: PieceType.Empty,
+  });
   turn: Color.White | Color.Black = Color.White;
   castling: string = "KQkq";
   epSquare: string | 0 = 0;
@@ -129,54 +142,211 @@ class Chess {
     return mailbox64.indexOf(mailbox64Index);
   }
 
+  /** Convert square in algebraic notation to array index */
+  private algebraicToIndex(square: string): number | null {
+    if (square.length !== 2 || !/[a-h][1-8]/i.test(square)) {
+      return null;
+    }
+
+    const file = square.charCodeAt(0) - "a".charCodeAt(0);
+    const rank = 8 - Number(square[1]);
+
+    // Calculate index
+    const index = rank * 8 + file;
+
+    return index;
+  }
+
   /** Get the piece at a given square */
-  private getPieceAt(square: number): Piece | null {
+  private getPieceAt(square: number): Piece {
     return this.board[square];
   }
 
   /** Set the piece at a given square */
-  private setPieceAt(square: number, piece: Piece | null) {
+  private setPieceAt(square: number, piece: Piece) {
     this.board[square] = piece;
   }
 
-  /** Generate all legal moves for the current position */
-  private generateLegalMoves(): Move[] {
-    // Iterate through board to find pieces of current player's color
-    // For each piece:
-    // - If pawn: Move forward 1 or 2, diagonals if occupied by opposing
-    // - If non-sliding piece: Calculate each of squares piece can move to
-    // - If sliding piece: Calculate each square in each available direction until hits piece
-    // * Special moves: big pawn move, en passant, promotion, castle
-    const legalMoves: Move[] = [];
+  /** Generate all pseudo-legal moves for the current position */
+  private generateMoves(): Move[] {
+    const moves: Move[] = [];
 
+    // Piece and pawn moves
     for (let square = 0; square < 64; square++) {
       const piece = this.getPieceAt(square);
 
-      if (piece && piece.color === this.turn) {
+      if (piece.color === this.turn) {
         if (piece.type !== PieceType.Pawn) {
-          for (let i = 0; i < pieceDirections[piece.type]; i++) { // For all directions
-            for (let j = square; ;) {
+          for (let i = 0; i < pieceDirections[piece.type]; i++) {
+            // For all directions
+            for (let j = square; ; ) {
               j = mailbox[mailbox64[j] + pieceOffsets[piece.type][i]]; // Next square along ray
               if (j === -1) break; // off-board
               const targetPiece = this.getPieceAt(j);
-              if (targetPiece) {
-                if (targetPiece.color !== PieceType.Empty) {
-                  if (targetPiece.color !== this.turn) {
-                    legalMoves.push({ from: square, to: j, flag: "capture" });
-                  }
-                  break;
+              if (targetPiece.type !== PieceType.Empty) {
+                if (targetPiece.color !== this.turn) {
+                  moves.push({ from: square, to: j, flag: MoveFlag.Capture });
                 }
+                break;
               }
-              legalMoves.push({ from: square, to: j, flag: "normal" });
-              if (!slidingPieces[piece.type]) break;
+              moves.push({ from: square, to: j, flag: MoveFlag.Normal });
+              if (!slidingPieces[piece.type]) break; // Continue for sliding pieces, next direction for non-sliding
             }
           }
         } else {
           // pawn moves
+          const direction = piece.color === Color.White ? -1 : 1;
+          const startRank = piece.color === Color.White ? 6 : 1;
+          let targetSquare = square + 7 * direction;
+
+          if (this.turn === Color.White) {
+            // Left diagonal, right diagonal, space ahead (2 space ahead)
+            if (
+              mailbox[mailbox64[square - 11]] !== -1 &&
+              this.getPieceAt(square - 9)?.color === Color.Black
+            ) {
+              moves.push({
+                from: square,
+                to: square - 9,
+                flag: MoveFlag.Capture,
+              });
+            }
+            if (
+              mailbox[mailbox64[square - 9]] !== -1 &&
+              this.getPieceAt(square - 7)?.color === Color.Black
+            ) {
+              moves.push({
+                from: square,
+                to: square - 7,
+                flag: MoveFlag.Capture,
+              });
+            }
+            if (this.getPieceAt(square - 8)?.type === PieceType.Empty) {
+              moves.push({ from: square, to: square - 8, flag: MoveFlag.Pawn });
+              if (
+                square >= 48 &&
+                this.getPieceAt(square - 16)?.type === PieceType.Empty
+              ) {
+                moves.push({
+                  from: square,
+                  to: square - 16,
+                  flag: MoveFlag.BigPawn,
+                });
+              }
+            }
+          } else {
+            if (
+              mailbox[mailbox64[square + 11]] !== -1 &&
+              this.getPieceAt(square + 9)?.color === Color.White
+            ) {
+              moves.push({
+                from: square,
+                to: square + 9,
+                flag: MoveFlag.Capture,
+              });
+            }
+            if (
+              mailbox[mailbox64[square + 9]] !== -1 &&
+              this.getPieceAt(square + 7)?.color === Color.White
+            ) {
+              moves.push({
+                from: square,
+                to: square + 7,
+                flag: MoveFlag.Capture,
+              });
+            }
+            if (this.getPieceAt(square + 8)?.type === PieceType.Empty) {
+              moves.push({ from: square, to: square + 8, flag: MoveFlag.Pawn });
+              if (
+                square <= 15 &&
+                this.getPieceAt(square + 16)?.type === PieceType.Empty
+              ) {
+                moves.push({
+                  from: square,
+                  to: square + 16,
+                  flag: MoveFlag.BigPawn,
+                });
+              }
+            }
+          }
         }
       }
     }
-    return legalMoves;
+
+    // Castling moves
+    if (this.turn === Color.White) {
+      if (this.castling.includes("K")) {
+        moves.push({ from: 60, to: 62, flag: MoveFlag.Castle });
+      }
+      if (this.castling.includes("Q")) {
+        moves.push({ from: 60, to: 58, flag: MoveFlag.Castle });
+      }
+    } else {
+      if (this.castling.includes("k")) {
+        moves.push({ from: 4, to: 6, flag: MoveFlag.Castle });
+      }
+      if (this.castling.includes("q")) {
+        moves.push({ from: 4, to: 2, flag: MoveFlag.Castle });
+      }
+    }
+
+    // En passant moves
+    if (this.epSquare) {
+      const index = this.algebraicToIndex(this.epSquare);
+      if (index) {
+        if (this.turn === Color.White) {
+          if (
+            mailbox[mailbox64[index - 11]] !== -1 &&
+            this.getPieceAt(index - 9).color === Color.Black &&
+            this.getPieceAt(index - 9).type === PieceType.Pawn
+          ) {
+            moves.push({
+              from: index,
+              to: index - 9,
+              flag: MoveFlag.EnPassant,
+            });
+          }
+          if (
+            mailbox[mailbox64[index - 9]] !== -1 &&
+            this.getPieceAt(index - 7).color === Color.Black &&
+            this.getPieceAt(index - 7).type === PieceType.Pawn
+          ) {
+            moves.push({
+              from: index,
+              to: index - 7,
+              flag: MoveFlag.EnPassant,
+            });
+          }
+        } else {
+          if (
+            mailbox[mailbox64[index + 11]] !== -1 &&
+            this.getPieceAt(index + 9).color === Color.Black &&
+            this.getPieceAt(index + 9).type === PieceType.Pawn
+          ) {
+            moves.push({
+              from: index,
+              to: index + 9,
+              flag: MoveFlag.EnPassant,
+            });
+          }
+          if (
+            mailbox[mailbox64[index + 9]] !== -1 &&
+            this.getPieceAt(index + 7).color === Color.Black &&
+            this.getPieceAt(index + 7).type === PieceType.Pawn
+          ) {
+            moves.push({
+              from: index,
+              to: index + 7,
+              flag: MoveFlag.EnPassant,
+            });
+          }
+        }
+      } else {
+        console.debug("Invalid en passant square format in FEN string");
+      }
+    }
+
+    return moves;
   }
 
   /** Check if a move is legal */
@@ -193,9 +363,7 @@ class Chess {
     return true;
   }
 
-  undoMove(): void {
-
-  }
+  undoMove(): void {}
 
   /** Parse FEN components and update game state */
   private parseFen(fen: string): void {
@@ -213,7 +381,10 @@ class Chess {
       } else if ("12345678".includes(char)) {
         for (let i = 0; i < +char; i++) {
           // this.board[sq] = { type: PIECES.EMPTY, color: COLORS.EMPTY };
-          this.setPieceAt(sq, { type: PieceType.Empty, color: PieceType.Empty });
+          this.setPieceAt(sq, {
+            type: PieceType.Empty,
+            color: PieceType.Empty,
+          });
           sq++;
           file++;
         }
